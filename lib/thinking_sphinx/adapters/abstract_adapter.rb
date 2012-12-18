@@ -37,7 +37,9 @@ module ThinkingSphinx
     end
 
     def self.standard_adapter_for_model(model)
-      case model.connection.class.name
+      connection = (model.connection.class.name == "MultiDb::ConnectionProxy") ?
+        model.connection.master.connection : model.connection
+      case connection.class.name
       when "ActiveRecord::ConnectionAdapters::MysqlAdapter",
            "ActiveRecord::ConnectionAdapters::MysqlplusAdapter",
            "ActiveRecord::ConnectionAdapters::Mysql2Adapter",
@@ -46,16 +48,16 @@ module ThinkingSphinx
       when "ActiveRecord::ConnectionAdapters::PostgreSQLAdapter"
         :postgresql
       when "ActiveRecord::ConnectionAdapters::JdbcAdapter"
-        case model.connection.config[:adapter]
+        case connection.config[:adapter]
         when "jdbcmysql"
           :mysql
         when "jdbcpostgresql"
           :postgresql
         else
-          model.connection.config[:adapter].to_sym
+          connection.config[:adapter].to_sym
         end
       else
-        model.connection.class.name
+        connection.class.name
       end
     end
 
